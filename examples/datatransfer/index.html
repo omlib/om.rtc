@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta id="theme-color" name="theme-color" content="#ffffff">
+
+		<base target="_blank">
+
+		<title>om.rtc.datatransfer</title>
+
+		<style>
+			body {
+				margin: 0;
+				padding: 10px;
+				background: #455A64;
+				color: #263238;
+			}
+			body, input {
+				font-family: 'Anonymous Pro';
+				font-size: 11px;
+			}
+			div.progress {
+			  margin: 0 0 1em 0;
+			}
+			div.progress div.label {
+			  display: inline-block;
+			  font-weight: 400;
+			  width: 8.2em;
+			}
+			div.input {
+			  margin: 0 0 1em 0;
+			}
+			progress {
+			  width: calc(100% - 8.5em);
+			}
+		</style>
+
+		<script src="app.js" defer></script>
+
+	</head>
+
+	<body>
+
+		<div id="container">
+
+			<section>
+				<p>This page generates and sends the specified amount of data via WebRTC datachannels.</p>
+				<p>To accomplish this in an interoperable way, the data is split into chunks which are then transferred via the datachannel.<br>The datachannel is reliable and ordered by default which is well-suited to filetransfers.</p>
+			</section>
+
+			<section>
+
+				<div id="button">
+					<button id="sendTheData" type="button">Generate and send data</button>
+				</div>
+
+				<div class="input">
+					<input type="number" id="megsToSend" min="1" name="megs" value="128"/>
+					<label for="megsToSend">MB</label>
+					<div id="errorMsg"></div>
+				</div>
+
+				<div class="input">
+					<input type="checkbox" id="ordered" checked="">
+					<label for="ordered">Ordered mode</label>
+				</div>
+
+				<div class="progress">
+					<div class="label">Send progress: </div>
+					<progress id="sendProgress" max="0" value="0"></progress>
+				</div>
+
+				<div class="progress">
+					<div class="label">Receive progress: </div>
+					<progress id="receiveProgress" max="0" value="0"></progress>
+				</div>
+
+			</section>
+
+		</div>
+
+	</body>
+
+</html>
