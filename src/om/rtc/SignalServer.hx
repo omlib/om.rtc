@@ -67,7 +67,7 @@ class SignalServer {
 
             net = Net.createServer( (socket:Socket)->{
 
-                var id = createPeerId(4);
+                var id = Util.createRandomString( 4 );
                 var peer = new Peer( socket, id );
                 peers.set( id, cast peer );
                 numPeers++;
@@ -144,14 +144,6 @@ class SignalServer {
             });
         });
     }
-
-    static function createPeerId( length : Int ) : String {
-		var CHARS = Base64.CHARS.substr( 0, Base64.CHARS.length-2 );
-		var buf = new Array<String>();
-		for( i in 0...length )
-			buf.push( CHARS.charAt( Std.int( Math.random() * CHARS.length-1 ) ) );
-		return buf.join( '' );
-	}
 }
 
 #end

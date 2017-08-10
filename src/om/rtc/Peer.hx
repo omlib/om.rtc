@@ -5,15 +5,16 @@ import haxe.ds.IntMap;
 import js.Browser.console;
 import js.Promise;
 import js.html.WebSocket;
+import js.html.rtc.Configuration;
 import js.html.rtc.DataChannel;
+import js.html.rtc.DataChannelInit;
 import js.html.rtc.IceCandidate;
 import js.html.rtc.PeerConnection;
-import js.html.rtc.Configuration;
 import js.html.rtc.SessionDescription;
 
 class Peer {
 
-    public dynamic function onCandidate( e : Dynamic ) {}
+    public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onConnect() {}
     public dynamic function onDisconnect() {}
     public dynamic function onMessage( msg : Dynamic ) {}
@@ -37,7 +38,7 @@ class Peer {
     }
 
     @:allow(om.rtc.Pool)
-    function connectTo() {
+    function connectTo( channelId : String, ?channelConfig : DataChannelInit ) {
 
         initiator = true;
 
@@ -49,12 +50,7 @@ class Peer {
                 }
             }
 
-            setDataChannel( connection.createDataChannel( "letterspace-"+id, {
-                //ordered: false,
-                //outOfOrderAllowed: true,
-                //maxRetransmitTime: 400,
-                //maxPacketLifeTime: 1000
-            } ) );
+            setDataChannel( connection.createDataChannel( channelId, channelConfig ) );
 
             connection.onnegotiationneeded = function() {
                 connection.createOffer()
@@ -102,8 +98,7 @@ class Peer {
 
     @:allow(om.rtc.Pool)
     function setRemoteDescription( sdp : Dynamic ) {
-        connection.setRemoteDescription( new SessionDescription( sdp ) ).then( function(e){
-        });
+        return connection.setRemoteDescription( new SessionDescription( sdp ) );
     }
 
     @:allow(om.rtc.Pool)

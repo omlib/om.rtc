@@ -22,51 +22,48 @@ class Pool {
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
-
     public var peers(default,null) : Map<String,Peer>;
     public var numPeers(default,null) = 0;
+    public var myid(default,null) : String;
 
-    var server : WebSocket;
-    var myId : String;
-    var timeJoinded : Float;
     var statusRequested = false;
     var config : Dynamic; // my config
+    var server : WebSocket;
 
-    public function new( ip : String, port : Int ) {
+    //TODO
+    var dataChannelConfig = {
+        ordered: false,
+        outOfOrderAllowed: true,
+        //maxRetransmitTime: 400,
+        //maxPacketLifeTime: 1000
+    };
+
+    public function new( ip : String, port : Int, config : Dynamic ) {
         this.ip = ip;
         this.port = port;
+        this.config = config;
     }
 
-    public function join( config : Dynamic ) {
+    public function connect() {
 
-        this.config = config;
+        peers = new Map();
+        numPeers = 0;
 
         return new Promise( function(resolve,reject){
-
-            peers = new Map();
 
             server = new WebSocket( 'ws://$ip:$port' );
             server.addEventListener( 'open', function(e){
                 trace( 'Singal server connected' );
-                //var msg : Dynamic = { type: 'init' };
-                //if( config != null ) Reflect.setField( msg, 'config', config );
-                //signal( msg );
             });
             server.addEventListener( 'close', function(e){
-                switch e.code {
-                case 1000: onDisconnect( null );
-                //case 1006:
-                default: onDisconnect( 'close' );
-                }
+                console.log( e);
+                onDisconnect( 'server disconnected' );
+                reject( 'server error '+e.code );
             });
             server.addEventListener( 'error', function(e){
-                console.log( e.toString() );
-                reject( 'server error' );
-                switch e.code {
-                case 1000: onDisconnect( null );
-                //case 1006:
-                default: onDisconnect( 'error' );
-                }
+                console.log( e);
+                onDisconnect( 'server error '+e.code );
+                reject( 'server error '+e.code );
             });
             server.addEventListener( 'message', function(e){
 
@@ -77,33 +74,28 @@ class Pool {
 
                 case 'init':
 
-                    myId = msg.id;
-
+                    myid = msg.id;
                     trace( "My id:"+Std.string( msg.id ) );
-
-                    //resolve( cast null );
 
                     var peerIds : Array<Dynamic> = msg.peers;
                     if( peerIds.length == 0 ) {
                         statusRequested = true;
-                        resolve( cast null );
                     } else {
                         for( id in peerIds ) {
                             var peer = createPeer( id );
-                            peer.connectTo().then( function(sdp){
-                                //signal( { type: 'offer', id: id, sdp: res.sdp, candidates: res.candidates } );
+                            peer.connectTo( 'letterspace-'+peer.id, dataChannelConfig ).then( function(sdp){
                                 signal( { type: 'offer', id: id, sdp: sdp } );
                             }).catchError( function(e){
                                 trace(e);
                             });
                         }
-                        resolve( cast null );
                     }
+
+                    resolve( cast null );
 
                 case 'offer':
                     var peer = createPeer( msg.id );
                     peer.connectFrom( msg.sdp, msg.candidates ).then( function(sdp){
-                        //signal( { type: 'answer', id: peer.id, sdp: res.sdp, candidates: res.candidates } );
                         signal( { type: 'answer', id: peer.id, sdp: sdp } );
                     }).catchError( function(e){
                         trace(e);
@@ -124,20 +116,22 @@ class Pool {
         });
     }
 
+    public function disconnect() {
+        for( peer in peers ) peer.disconnect();
+        peers = null;
+        server.close();
+    }
+
     public inline function signal( msg : Dynamic ) {
         server.send( Json.stringify( msg ) );
     }
 
     public inline function broadcast( msg : Dynamic  ) {
-        for( peer in peers ) {
-            peer.send( msg );
-        }
+        for( peer in peers ) peer.send( msg );
     }
 
-    public function leave() {
-        for( peer in peers ) peer.disconnect();
-        peers = null;
-        server.close();
+    function createChannelId() : String {
+        return Util.createRandomString( 8 );
     }
 
     function createPeer( id : String ) : Peer {
