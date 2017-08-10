@@ -18,7 +18,7 @@ class Pool {
 
     public dynamic function onPeerConnect( peer : Peer ) {}
     public dynamic function onPeerDisconnect( peer : Peer ) {}
-    public dynamic function onPeerMessage( peer : Peer, msg : Dynamic ) {}
+    public dynamic function onPeerMessage( peer : Peer, msg : String ) {}
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
@@ -159,7 +159,6 @@ class Pool {
             } ) );
         }
         peer.onConnect = function() {
-            trace( "onConnect "+statusRequested );
             if( !statusRequested ) {
                 peer.send( { type: 'join' } );
                 statusRequested = true;

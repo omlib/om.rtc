@@ -27,8 +27,14 @@ class Peer {
     var channel : DataChannel;
 
     public function new( id : String, ?config : Configuration ) {
+
         this.id = id;
+
         connection = new PeerConnection( config );
+        connection.onicecandidate = handleIceCandidate;
+        connection.oniceconnectionstatechange = function(e){
+            //trace(e);
+        }
     }
 
     public function send( msg : Dynamic ) {
@@ -43,12 +49,6 @@ class Peer {
         initiator = true;
 
         return new Promise( function(resolve,reject){
-
-            connection.onicecandidate = function(e){
-                if( e.candidate != null ) {
-                    onCandidate( e.candidate );
-                }
-            }
 
             setDataChannel( connection.createDataChannel( channelId, channelConfig ) );
 
@@ -75,17 +75,10 @@ class Peer {
 
         return new Promise( function(resolve,reject) {
 
-            connection.oniceconnectionstatechange = function(e){
-                //trace(e);
-            }
-            connection.onicecandidate = function(e){
-                if( e.candidate != null ) {
-                    onCandidate( e.candidate );
-                }
-            }
             connection.ondatachannel = function(e){
                 setDataChannel( e.channel );
             }
+
             connection.setRemoteDescription( new SessionDescription( sdp ) ).then( function(_){
                 connection.createAnswer().then( function(answer){
                     connection.setLocalDescription( answer ).then( function(e){
@@ -98,6 +91,7 @@ class Peer {
 
     @:allow(om.rtc.Pool)
     function setRemoteDescription( sdp : Dynamic ) {
+        //if( !initiator )
         return connection.setRemoteDescription( new SessionDescription( sdp ) );
     }
 
@@ -110,6 +104,12 @@ class Peer {
         }
     }
 
+    function handleIceCandidate(e) {
+        if( e.candidate != null ) {
+            onCandidate( e.candidate );
+        }
+    }
+
     function setDataChannel( channel : DataChannel ) {
         this.channel = channel;
         channel.onopen = e -> {
@@ -118,8 +118,8 @@ class Peer {
             onConnect();
         }
         channel.onmessage = e -> {
-            var msg = Json.parse( e.data );
-            onMessage( msg );
+            //var msg = Json.parse( e.data );
+            onMessage( e.data );
         };
         channel.onclose = e -> {
             trace( "Data channel closed" );
