@@ -1,2 +1,6 @@
-examples/*/*.js*
-TODO*
+_*
+doc/
+examples/**.js*
+example/**.js*
+experiments/
+test/unit*

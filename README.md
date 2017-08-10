@@ -1,4 +1,4 @@
 
-# OM|RTC
+# OM.RTC
 
-WebRTC tools.
+Realtime communication tools.

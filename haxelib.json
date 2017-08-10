@@ -1,14 +1,15 @@
 {
     "name": "om.rtc",
-    "version": "0.1.0",
+    "version": "0.0.0",
     "description": "WebRTC tools",
-    "tags": ["om","rtc"],
+    "tags": ["om","rtc","webrtc","p2p"],
     "url": "https://github.com/tong/om.rtc",
     "license": "OM",
     "contributors": ["tong"],
     "releasenote": "See CHANGELOG.md",
     "classPath" : "src/",
     "dependencies": {
-		"om.core": ""
+		"om.core": "",
+		"om.net": ""
     }
 }
