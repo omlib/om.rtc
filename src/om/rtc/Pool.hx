@@ -118,7 +118,8 @@ class Pool {
 
     public function disconnect() {
         for( peer in peers ) peer.disconnect();
-        peers = null;
+        peers = new Map();
+        numPeers = 0;
         server.close();
     }
 
@@ -175,5 +176,10 @@ class Pool {
         }
 
         return peer;
+    }
+
+    function cleanup() {
+        peers = new Map();
+        numPeers = 0;
     }
 }
