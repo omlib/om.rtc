@@ -1,8 +1,0 @@
--dce full
--debug
---each
-
---next
--js app.js
--main App
--lib om.rtc
