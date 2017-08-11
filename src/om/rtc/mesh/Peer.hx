@@ -23,9 +23,8 @@ class Peer {
     public var id(default,null) : String;
     public var connected(default,null) = false;
     public var initiator(default,null) : Bool;
-
-    var connection : PeerConnection;
-    var channel : DataChannel;
+    public var connection(default,null) : PeerConnection;
+    public var channel(default,null) : DataChannel;
 
     public function new( id : String, ?config : Configuration ) {
 
@@ -114,21 +113,17 @@ class Peer {
     function setDataChannel( channel : DataChannel ) {
         this.channel = channel;
         channel.onopen = function(e) {
-            //trace( "Data channel opened" );
             connected = true;
             onConnect();
         }
         channel.onmessage = function(e) {
-            //var msg = Json.parse( e.data );
             onMessage( e.data );
         };
         channel.onclose = function(e) {
-            //trace( "Data channel closed" );
             connected = false;
             onDisconnect();
         }
         channel.onerror = function(e) {
-            //trace( "Data channel error" );
             connected = false;
             onDisconnect();
         }

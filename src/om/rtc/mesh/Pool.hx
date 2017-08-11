@@ -13,8 +13,8 @@ import js.html.rtc.SessionDescription;
 
 class Pool {
 
-    public dynamic function onDisconnect( e : Dynamic ) {}
     //public dynamic function onSignal( msg : Dynamic ) {}
+    public dynamic function onDisconnect( e : Dynamic ) {}
 
     public dynamic function onPeerConnect( peer : Peer ) {}
     public dynamic function onPeerDisconnect( peer : Peer ) {}
@@ -63,6 +63,8 @@ class Pool {
 
                 var msg = try Json.parse( e.data ) catch(e:Dynamic) {
                     console.error(e);
+                    //onDisconnect( 'server error '+e.code );
+                    //reject( e );
                     return;
                 }
 
