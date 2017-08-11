@@ -20,10 +20,6 @@ private class Peer {
     public dynamic function onMessage( msg : Dynamic ) {}
 
     public var id(default,null) : String;
-    //public var time(default,null) : Float;
-
-    //@:allow(letterspace.net.Server)
-    //public var config(default,null) : Dynamic;
 
     var socket : Socket;
     var isWebSocket : Bool;
@@ -134,7 +130,6 @@ class SignalServer {
                     switch msg.type {
                     case 'offer','answer','candidate':
                         var receiver = peers.get( msg.id );
-                        //log( peer.id +' >> '+receiver.id + ' '+ msg.type );
                         msg.id = id;
                         receiver.send( msg );
                     default:
