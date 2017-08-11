@@ -5,10 +5,10 @@ import haxe.ds.IntMap;
 import js.Browser.console;
 import js.Promise;
 import js.html.WebSocket;
+import js.html.rtc.Configuration;
 import js.html.rtc.DataChannel;
 import js.html.rtc.IceCandidate;
 import js.html.rtc.PeerConnection;
-import js.html.rtc.Configuration;
 import js.html.rtc.SessionDescription;
 
 class Pool {
@@ -26,8 +26,8 @@ class Pool {
     public var numPeers(default,null) = 0;
     public var myid(default,null) : String;
 
+    var config : Configuration;
     var statusRequested = false;
-    var config : Dynamic; // my config
     var server : WebSocket;
 
     //TODO
@@ -38,7 +38,7 @@ class Pool {
         //maxPacketLifeTime: 1000
     };
 
-    public function new( ip : String, port : Int, config : Dynamic ) {
+    public function new( ip : String, port : Int, config : Configuration ) {
         this.ip = ip;
         this.port = port;
         this.config = config;
@@ -136,17 +136,7 @@ class Pool {
     }
 
     function createPeer( id : String ) : Peer {
-
-        var config = {
-            'iceServers': [
-                { 'url': 'stun:stun.l.google.com:19302' },
-                { 'url': 'stun:stun1.l.google.com:19302' },
-                { 'url': 'stun:stun2.l.google.com:19302' },
-                { 'url': 'stun:stun3.l.google.com:19302' },
-                { 'url': 'stun:stun4.l.google.com:19302' },
-            ]
-        };
-
+        
         var peer = new Peer( id, config );
         peers.set( peer.id, peer );
         numPeers++;
