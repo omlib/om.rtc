@@ -31,7 +31,11 @@ class Peer {
         this.id = id;
 
         connection = new PeerConnection( config );
-        connection.onicecandidate = handleIceCandidate;
+        connection.onicecandidate = function(e){
+            if( e.candidate != null ) {
+                onCandidate( e.candidate );
+            }
+        }
         connection.oniceconnectionstatechange = function(e){
             //trace(e);
         }
@@ -39,7 +43,7 @@ class Peer {
 
     public function send( msg : Dynamic ) {
         if( connected ) {
-            channel.send( Json.stringify( msg ) );
+            channel.send( msg );
         }
     }
 
@@ -48,10 +52,9 @@ class Peer {
 
         initiator = true;
 
+        setDataChannel( connection.createDataChannel( channelId, channelConfig ) );
+
         return new Promise( function(resolve,reject){
-
-            setDataChannel( connection.createDataChannel( channelId, channelConfig ) );
-
             connection.onnegotiationneeded = function() {
                 connection.createOffer()
                     .then( function(desc) connection.setLocalDescription( desc ) )
@@ -64,21 +67,15 @@ class Peer {
     }
 
     @:allow(om.rtc.Pool)
-    function addIceCandidate( candidate : Dynamic ) {
-        connection.addIceCandidate( new IceCandidate( candidate ) );
-    }
-
-    @:allow(om.rtc.Pool)
     function connectFrom( sdp : Dynamic, candidates : Array<Dynamic> ) {
 
         initiator = false;
 
+        connection.ondatachannel = function(e){
+            setDataChannel( e.channel );
+        }
+
         return new Promise( function(resolve,reject) {
-
-            connection.ondatachannel = function(e){
-                setDataChannel( e.channel );
-            }
-
             connection.setRemoteDescription( new SessionDescription( sdp ) ).then( function(_){
                 connection.createAnswer().then( function(answer){
                     connection.setLocalDescription( answer ).then( function(e){
@@ -87,6 +84,11 @@ class Peer {
                 });
             });
         });
+    }
+
+    @:allow(om.rtc.Pool)
+    function addIceCandidate( candidate : Dynamic ) {
+        connection.addIceCandidate( new IceCandidate( candidate ) );
     }
 
     @:allow(om.rtc.Pool)
@@ -104,30 +106,24 @@ class Peer {
         }
     }
 
-    function handleIceCandidate(e) {
-        if( e.candidate != null ) {
-            onCandidate( e.candidate );
-        }
-    }
-
     function setDataChannel( channel : DataChannel ) {
         this.channel = channel;
-        channel.onopen = e -> {
-            trace( "Data channel opened" );
+        channel.onopen = function(e) {
+            //trace( "Data channel opened" );
             connected = true;
             onConnect();
         }
-        channel.onmessage = e -> {
+        channel.onmessage = function(e) {
             //var msg = Json.parse( e.data );
             onMessage( e.data );
         };
-        channel.onclose = e -> {
-            trace( "Data channel closed" );
+        channel.onclose = function(e) {
+            //trace( "Data channel closed" );
             connected = false;
             onDisconnect();
         }
-        channel.onerror = e -> {
-            trace( "Data channel error" );
+        channel.onerror = function(e) {
+            //trace( "Data channel error" );
             connected = false;
             onDisconnect();
         }

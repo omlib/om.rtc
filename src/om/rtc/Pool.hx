@@ -68,7 +68,7 @@ class Pool {
             server.addEventListener( 'message', function(e){
 
                 var msg = Json.parse( e.data );
-                console.log(msg);
+                //console.log(msg);
 
                 switch msg.type {
 
@@ -83,7 +83,7 @@ class Pool {
                     } else {
                         for( id in peerIds ) {
                             var peer = createPeer( id );
-                            peer.connectTo( 'letterspace-'+peer.id, dataChannelConfig ).then( function(sdp){
+                            peer.connectTo( createDataChannelId(), dataChannelConfig ).then( function(sdp){
                                 signal( { type: 'offer', id: id, sdp: sdp } );
                             }).catchError( function(e){
                                 trace(e);
@@ -98,7 +98,7 @@ class Pool {
                     peer.connectFrom( msg.sdp, msg.candidates ).then( function(sdp){
                         signal( { type: 'answer', id: peer.id, sdp: sdp } );
                     }).catchError( function(e){
-                        trace(e);
+                        trace('ERROR');
                     });
 
                 case 'candidate':
@@ -128,10 +128,10 @@ class Pool {
     }
 
     public inline function broadcast( msg : Dynamic  ) {
-        for( peer in peers ) peer.send( msg );
+        for( peer in peers ) peer.send( Json.stringify( msg ) );
     }
 
-    function createChannelId() : String {
+    function createDataChannelId() : String {
         return Util.createRandomString( 8 );
     }
 
@@ -160,7 +160,7 @@ class Pool {
         }
         peer.onConnect = function() {
             if( !statusRequested ) {
-                peer.send( { type: 'join' } );
+                peer.send( Json.stringify( { type: 'join' } ) );
                 statusRequested = true;
             }
             onPeerConnect( peer );

@@ -55,6 +55,7 @@ private class Peer {
                 }
             } else if( isWebSocket ) {
                 buf = WebSocket.readFrame( buf );
+                if( buf == null ) return;
             }
 
             //var str = buffer + buf.toString();
