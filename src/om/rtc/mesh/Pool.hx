@@ -26,22 +26,16 @@ class Pool {
     public var numPeers(default,null) = 0;
     public var myid(default,null) : String;
 
-    var config : Configuration;
-    var statusRequested = false;
+    var connectionConfig : Configuration;
+    var dataChannelConfig : Dynamic;
     var server : WebSocket;
+    var statusRequested = false;
 
-    //TODO
-    var dataChannelConfig = {
-        ordered: false,
-        outOfOrderAllowed: true,
-        //maxRetransmitTime: 400,
-        //maxPacketLifeTime: 1000
-    };
-
-    public function new( ip : String, port : Int, config : Configuration ) {
+    public function new( ip : String, port : Int, connectionConfig : Configuration, dataChannelConfig : Dynamic ) {
         this.ip = ip;
         this.port = port;
-        this.config = config;
+        this.connectionConfig = connectionConfig;
+        this.dataChannelConfig = dataChannelConfig;
     }
 
     public function connect() {
@@ -67,16 +61,15 @@ class Pool {
             });
             server.addEventListener( 'message', function(e){
 
-                var msg = Json.parse( e.data );
-                //console.log(msg);
+                var msg = try Json.parse( e.data ) catch(e:Dynamic) {
+                    console.error(e);
+                    return;
+                }
 
                 switch msg.type {
 
                 case 'init':
-
                     myid = msg.id;
-                    trace( "My id:"+Std.string( msg.id ) );
-
                     var peerIds : Array<Dynamic> = msg.peers;
                     if( peerIds.length == 0 ) {
                         statusRequested = true;
@@ -136,11 +129,7 @@ class Pool {
     }
 
     function createPeer( id : String ) : Peer {
-
-        var peer = new Peer( id, config );
-        peers.set( peer.id, peer );
-        numPeers++;
-
+        var peer = new Peer( id, connectionConfig );
         peer.onCandidate = function(e) {
             server.send( Json.stringify( {
                 type: 'candidate',
@@ -163,7 +152,8 @@ class Pool {
             numPeers--;
             onPeerDisconnect( peer );
         }
-
+        peers.set( peer.id, peer );
+        numPeers++;
         return peer;
     }
 
