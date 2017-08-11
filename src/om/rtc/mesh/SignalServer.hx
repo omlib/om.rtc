@@ -1,4 +1,4 @@
-package om.rtc;
+package om.rtc.mesh;
 
 #if nodejs
 

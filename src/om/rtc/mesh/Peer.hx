@@ -1,9 +1,10 @@
-package om.rtc;
+package om.rtc.mesh;
 
 import haxe.Json;
 import haxe.ds.IntMap;
 import js.Browser.console;
 import js.Promise;
+import js.html.MediaStream;
 import js.html.WebSocket;
 import js.html.rtc.Configuration;
 import js.html.rtc.DataChannel;
@@ -47,7 +48,11 @@ class Peer {
         }
     }
 
-    @:allow(om.rtc.Pool)
+    public function addStream( stream : MediaStream ) {
+        connection.addStream( stream );
+    }
+
+    @:allow(om.rtc.mesh.Pool)
     function connectTo( channelId : String, ?channelConfig : DataChannelInit ) {
 
         initiator = true;
@@ -66,7 +71,7 @@ class Peer {
         });
     }
 
-    @:allow(om.rtc.Pool)
+    @:allow(om.rtc.mesh.Pool)
     function connectFrom( sdp : Dynamic, candidates : Array<Dynamic> ) {
 
         initiator = false;
@@ -86,18 +91,18 @@ class Peer {
         });
     }
 
-    @:allow(om.rtc.Pool)
+    @:allow(om.rtc.mesh.Pool)
     function addIceCandidate( candidate : Dynamic ) {
         connection.addIceCandidate( new IceCandidate( candidate ) );
     }
 
-    @:allow(om.rtc.Pool)
+    @:allow(om.rtc.mesh.Pool)
     function setRemoteDescription( sdp : Dynamic ) {
         //if( !initiator )
         return connection.setRemoteDescription( new SessionDescription( sdp ) );
     }
 
-    @:allow(om.rtc.Pool)
+    @:allow(om.rtc.mesh.Pool)
     function disconnect() {
         if( connected ) {
             connected = false;

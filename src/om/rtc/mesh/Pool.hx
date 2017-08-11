@@ -1,4 +1,4 @@
-package om.rtc;
+package om.rtc.mesh;
 
 import haxe.Json;
 import haxe.ds.IntMap;
@@ -136,7 +136,7 @@ class Pool {
     }
 
     function createPeer( id : String ) : Peer {
-        
+
         var peer = new Peer( id, config );
         peers.set( peer.id, peer );
         numPeers++;
