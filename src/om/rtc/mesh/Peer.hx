@@ -71,7 +71,7 @@ class Peer {
     }
 
     @:allow(om.rtc.mesh.Pool)
-    function connectFrom( sdp : Dynamic, candidates : Array<Dynamic> ) {
+    function connectFrom( sdp : Dynamic ) {
 
         initiator = false;
 

@@ -10,6 +10,7 @@ import js.html.rtc.DataChannel;
 import js.html.rtc.IceCandidate;
 import js.html.rtc.PeerConnection;
 import js.html.rtc.SessionDescription;
+import om.rtc.mesh.signal.Message;
 
 class Pool {
 
@@ -20,6 +21,7 @@ class Pool {
     public dynamic function onPeerDisconnect( peer : Peer ) {}
     public dynamic function onPeerMessage( peer : Peer, msg : String ) {}
 
+    public var id(default,null) : String;
     public var ip(default,null) : String;
     public var port(default,null) : Int;
     public var peers(default,null) : Map<String,Peer>;
@@ -31,7 +33,8 @@ class Pool {
     var server : WebSocket;
     var statusRequested = false;
 
-    public function new( ip : String, port : Int, connectionConfig : Configuration, dataChannelConfig : Dynamic ) {
+    public function new( id : String, ip : String, port : Int, connectionConfig : Configuration, dataChannelConfig : Dynamic ) {
+        this.id = id;
         this.ip = ip;
         this.port = port;
         this.connectionConfig = connectionConfig;
@@ -48,6 +51,7 @@ class Pool {
             server = new WebSocket( 'ws://$ip:$port' );
             server.addEventListener( 'open', function(e){
                 trace( 'Singal server connected' );
+                signal({ type: MessageType.join, pool: id });
             });
             server.addEventListener( 'close', function(e){
                 console.log( e);
@@ -61,25 +65,27 @@ class Pool {
             });
             server.addEventListener( 'message', function(e){
 
-                var msg = try Json.parse( e.data ) catch(e:Dynamic) {
+                var msg : Message = try Json.parse( e.data ) catch(e:Dynamic) {
                     console.error(e);
                     //onDisconnect( 'server error '+e.code );
                     //reject( e );
                     return;
                 }
 
+                console.log(msg);
+
                 switch msg.type {
 
-                case 'init':
-                    myid = msg.id;
-                    var peerIds : Array<Dynamic> = msg.peers;
+                case join:
+                    myid = msg.data.id;
+                    var peerIds : Array<Dynamic> = msg.data.peers;
                     if( peerIds.length == 0 ) {
                         statusRequested = true;
                     } else {
                         for( id in peerIds ) {
                             var peer = createPeer( id );
                             peer.connectTo( createDataChannelId(), dataChannelConfig ).then( function(sdp){
-                                signal( { type: 'offer', id: id, sdp: sdp } );
+                                signal( { type: offer, peer: peer.id, data: sdp } );
                             }).catchError( function(e){
                                 trace(e);
                             });
@@ -88,24 +94,30 @@ class Pool {
 
                     resolve( cast null );
 
-                case 'offer':
-                    var peer = createPeer( msg.id );
-                    peer.connectFrom( msg.sdp, msg.candidates ).then( function(sdp){
-                        signal( { type: 'answer', id: peer.id, sdp: sdp } );
+                case leave:
+
+                case offer:
+                    var peer = createPeer( msg.peer );
+                    peer.connectFrom( msg.data ).then( function(sdp){
+                        signal( { type: answer, peer: peer.id, data: sdp } );
                     }).catchError( function(e){
-                        trace('ERROR');
+                        trace('ERROR '+e);
                     });
 
-                case 'candidate':
-                    var peer = peers.get( msg.id );
-                    peer.addIceCandidate( msg.candidate );
+                case candidate:
+                    var peer = peers.get( msg.peer );
+                    peer.addIceCandidate( msg.data );
 
-                case 'answer':
-                    var peer = peers.get( msg.id );
-                    peer.setRemoteDescription( msg.sdp );//.then( function(_){
+                case answer:
+                    var peer = peers.get( msg.peer );
+                    peer.setRemoteDescription( msg.data );//.then( function(_){
                         //trace('oi');
                         //peer.send({type:"fucvk"});
                     //});
+
+                case error:
+                    trace("TODO handle signal error msg");
+
                 }
             });
         });
@@ -118,12 +130,16 @@ class Pool {
         server.close();
     }
 
-    public inline function signal( msg : Dynamic ) {
-        server.send( Json.stringify( msg ) );
+    public function signal( msg : Dynamic ) {
+        //Reflect.setField( msg, 'pool', id );
+        msg.pool = this.id;
+        var str = Json.stringify( msg );
+        server.send( str );
     }
 
     public inline function broadcast( msg : Dynamic  ) {
-        for( peer in peers ) peer.send( Json.stringify( msg ) );
+        for( peer in peers )
+            peer.send( Json.stringify( msg ) );
     }
 
     function createDataChannelId() : String {
@@ -133,15 +149,15 @@ class Pool {
     function createPeer( id : String ) : Peer {
         var peer = new Peer( id, connectionConfig );
         peer.onCandidate = function(e) {
-            server.send( Json.stringify( {
-                type: 'candidate',
-                id: peer.id,
-                candidate: e,
-            } ) );
+            signal( {
+                type: candidate,
+                peer: peer.id,
+                data: e,
+            } );
         }
         peer.onConnect = function() {
             if( !statusRequested ) {
-                peer.send( Json.stringify( { type: 'join' } ) );
+                peer.send( Json.stringify( { type: join } ) );
                 statusRequested = true;
             }
             onPeerConnect( peer );
