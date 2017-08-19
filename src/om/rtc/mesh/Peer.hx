@@ -37,13 +37,25 @@ class Peer {
             }
         }
         connection.oniceconnectionstatechange = function(e){
-            //trace(e);
+            //console.log(e);
+            switch e.iceConnectionState {
+            case 'disconnected':
+                connected = false;
+                //channel.close();
+                onDisconnect();
+            }
         }
     }
 
-    public function send( msg : Dynamic ) {
+    public function sendMessage( msg : Dynamic ) {
         if( connected ) {
-            channel.send( msg );
+            channel.send( Json.stringify( msg ) );
+        }
+    }
+
+    public function send( str : String ) {
+        if( connected ) {
+            channel.send( str );
         }
     }
 
@@ -120,10 +132,12 @@ class Peer {
             onMessage( e.data );
         };
         channel.onclose = function(e) {
+            //connection.close();
             connected = false;
             onDisconnect();
         }
         channel.onerror = function(e) {
+            //connection.close();
             connected = false;
             onDisconnect();
         }

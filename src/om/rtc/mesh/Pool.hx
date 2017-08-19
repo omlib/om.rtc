@@ -96,6 +96,8 @@ class Pool {
 
                 case leave:
 
+                case data:
+
                 case offer:
                     var peer = createPeer( msg.peer );
                     peer.connectFrom( msg.data ).then( function(sdp){
@@ -114,6 +116,12 @@ class Pool {
                         //trace('oi');
                         //peer.send({type:"fucvk"});
                     //});
+
+                case ping:
+                    signal( { type: pong } );
+
+                case pong:
+                    //
 
                 case error:
                     trace("TODO handle signal error msg");
@@ -137,9 +145,12 @@ class Pool {
         server.send( str );
     }
 
+    public function ping() {
+        server.send( Json.stringify( { type: MessageType.ping } ) );
+    }
+
     public inline function broadcast( msg : Dynamic  ) {
-        for( peer in peers )
-            peer.send( Json.stringify( msg ) );
+        for( peer in peers ) peer.sendMessage( msg );
     }
 
     function createDataChannelId() : String {
@@ -147,7 +158,11 @@ class Pool {
     }
 
     function createPeer( id : String ) : Peer {
+
         var peer = new Peer( id, connectionConfig );
+        peers.set( peer.id, peer );
+        numPeers++;
+
         peer.onCandidate = function(e) {
             signal( {
                 type: candidate,
@@ -156,8 +171,9 @@ class Pool {
             } );
         }
         peer.onConnect = function() {
+            trace( "onPeerConnect" );
             if( !statusRequested ) {
-                peer.send( Json.stringify( { type: join } ) );
+                peer.sendMessage( { type: join } );
                 statusRequested = true;
             }
             onPeerConnect( peer );
@@ -166,12 +182,12 @@ class Pool {
             onPeerMessage( peer, msg );
         }
         peer.onDisconnect = function(){
+            trace( "onPeerDisconnect" );
             peers.remove( peer.id );
             numPeers--;
             onPeerDisconnect( peer );
         }
-        peers.set( peer.id, peer );
-        numPeers++;
+
         return peer;
     }
 
