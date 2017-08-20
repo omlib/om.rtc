@@ -1,7 +1,7 @@
 _*
 bin/
 doc/
-examples/**.js*
-example/**.js*
+examples/*/**.js*
+example/*/**.js*
 experiments/
 test/unit*
