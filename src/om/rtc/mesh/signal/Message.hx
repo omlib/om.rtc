@@ -17,7 +17,7 @@ package om.rtc.mesh.signal;
     var ping = "ping";
     var pong = "pong";
 
-    //var data = "data";
+    var data = "data";
 
     //#if om_rtc_monitor
     //var monitor = "monitor";

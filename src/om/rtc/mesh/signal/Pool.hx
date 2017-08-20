@@ -7,9 +7,9 @@ class Pool {
     public var id(default,null) : String;
     //public var permanent(default,null) : Bool;
     //public var password(default,null) : String;
+    public var numPeers(default,null) : Int;
 
     var peers : Map<String,Peer>;
-    var numPeers : Int;
 
     public function new( id : String, permanent = false ) {
         this.id = id;

@@ -1,16 +1,11 @@
 package om.rtc.mesh.signal;
 
-import haxe.Json;
-import haxe.Timer;
-import haxe.crypto.Base64;
-import haxe.ds.IntMap;
 import js.Promise;
+import js.Node.console;
 import js.node.Buffer;
 import js.node.Net;
 import js.node.net.Socket;
-import js.Node.console;
 import om.Nil;
-import om.net.WebSocket;
 import om.rtc.mesh.signal.Message;
 
 class Server {
@@ -42,9 +37,7 @@ class Server {
     }
 
     public function start() : Promise<Nil> {
-
         return new Promise( function(resolve,reject){
-
             net = Net.createServer( handleSocketConnect );
             net.on( 'error', function(e){
                 onError(e);
@@ -64,12 +57,6 @@ class Server {
         }
     }
 
-    /*
-    public function update() {
-        for( pool in pools ) pool.update();
-    }
-    */
-
     public function addPool<T:Pool>( pool : T ) : T {
         if( pools.exists( pool.id ) )
             return null;
@@ -81,7 +68,7 @@ class Server {
         return addPool( cast new Pool( id ) );
     }
 
-    function createId( length = 16 ) : String {
+    function createPeerId( length = 16 ) : String {
         var id : String = null;
         while( true ) {
             id = Util.createRandomString( length );
@@ -95,7 +82,7 @@ class Server {
         //socket.setTimeout();
         socket.setKeepAlive( true );
 
-        var peer = new Peer( socket, createId() );
+        var peer = new Peer( socket, createPeerId() );
         peers.set( peer.id, peer );
         numPeers++;
 
@@ -112,22 +99,21 @@ class Server {
             onPeerDisconnect( peer );
         }
         peer.onMessage = function(buf) {
-
             var str = buf.toString();
             var msg : Message = try Json.parse( str ) catch(e:Dynamic) {
                 console.error( e );
                 return;
             }
-
             handlePeerMessage( peer, msg );
         }
     }
 
     function handlePeerMessage( peer : Peer, msg : Message ) {
 
-        //Sys.println( haxe.format.JsonPrinter.print(msg));
         //Sys.println( 'Message '+peer.id+' > '+msg.peer+' : '+msg.type );
         //onPeerMessage( peer, msg );
+        //console.log(haxe.format.JsonPrinter.print(msg,'\t'));
+        //onsole.log(msg.type);
 
         switch msg.type {
 
@@ -141,7 +127,6 @@ class Server {
             if( pool.add( peer ) ) {
                 onPoolJoin( pool, peer );
             }
-
             /*
             var pool : Pool;
             if( pools.exists( msg.pool ) ) {
@@ -209,7 +194,7 @@ class Server {
         */
 
         default:
-            //console.warn( 'Unknown type message: '+haxe.format.JsonPrinter.print(msg) );
+            console.warn( 'Unknown type message: '+haxe.format.JsonPrinter.print(msg) );
 
         }
     }
