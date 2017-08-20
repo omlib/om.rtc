@@ -37,38 +37,65 @@ class Peer {
             }
         }
         connection.oniceconnectionstatechange = function(e){
-            //console.log(e);
             switch e.iceConnectionState {
             case 'disconnected':
                 connected = false;
-                //channel.close();
                 onDisconnect();
             }
         }
     }
 
-    public function sendMessage( msg : Dynamic ) {
+    @:overload( function( data : String ) : Void {} )
+	@:overload( function( data : js.html.Blob ) : Void {} )
+	@:overload( function( data : js.html.ArrayBuffer ) : Void {} )
+    public function send( data : String ) {
         if( connected ) {
-            channel.send( Json.stringify( msg ) );
+            channel.send( data );
         }
     }
 
-    public function send( str : String ) {
+    public function sendMessage( msg : Dynamic ) {
+        if( connected ) {
+            var str = try Json.stringify( msg ) catch(e:Dynamic){
+                console.error(e);
+                return;
+            }
+            channel.send( str );
+        }
+    }
+
+    /*
+    public function sendString( str : String ) {
         if( connected ) {
             channel.send( str );
         }
     }
 
+    public function sendMessage( msg : Dynamic ) {
+        if( connected ) {
+            var str = try Json.stringify( msg ) catch(e:Dynamic){
+                console.error(e);
+                return;
+            }
+            channel.send( str );
+        }
+    }
+    */
+
     public function addStream( stream : MediaStream ) {
         connection.addStream( stream );
     }
 
+    public function createDataChannel( id : String, config : DataChannelInit ) : DataChannel {
+        return connection.createDataChannel( id, config );
+    }
+
     @:allow(om.rtc.mesh.Pool)
-    function connectTo( channelId : String, ?channelConfig : DataChannelInit ) {
+    function connectTo( ?channelConfig : DataChannelInit ) {
 
         initiator = true;
 
-        setDataChannel( connection.createDataChannel( channelId, channelConfig ) );
+        setDataChannel( connection.createDataChannel( createDataChannelId(), channelConfig ) );
 
         return new Promise( function(resolve,reject){
             connection.onnegotiationneeded = function() {
@@ -103,8 +130,8 @@ class Peer {
     }
 
     @:allow(om.rtc.mesh.Pool)
-    function addIceCandidate( candidate : Dynamic ) {
-        connection.addIceCandidate( new IceCandidate( candidate ) );
+    function addIceCandidate( candidate : Dynamic ) : Promise<Void> {
+        return connection.addIceCandidate( new IceCandidate( candidate ) );
     }
 
     @:allow(om.rtc.mesh.Pool)
@@ -141,5 +168,9 @@ class Peer {
             connected = false;
             onDisconnect();
         }
+    }
+
+    function createDataChannelId() : String {
+        return Util.createRandomString( 8 );
     }
 }

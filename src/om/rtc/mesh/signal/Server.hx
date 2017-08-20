@@ -8,6 +8,8 @@ import js.Promise;
 import js.node.Buffer;
 import js.node.Net;
 import js.node.net.Socket;
+import js.Node.console;
+import om.Nil;
 import om.net.WebSocket;
 import om.rtc.mesh.signal.Message;
 
@@ -25,18 +27,15 @@ class Server {
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
-    public var updateInterval(default,null) : Int;
+    public var numPeers(default,null) : Int;
 
     var net : js.node.net.Server;
-    var pools : Map<String,Pool>;
     var peers : Map<String,Peer>;
-    var numPeers : Int;
-    var timer : Timer;
+    var pools : Map<String,Pool>;
 
-    public function new( ip : String, port : Int, updateInterval : Int ) {
+    public function new( ip : String, port : Int ) {
         this.ip = ip;
         this.port = port;
-        this.updateInterval = updateInterval;
         peers = new Map();
         pools = new Map();
         numPeers = 0;
@@ -51,11 +50,7 @@ class Server {
                 onError(e);
             });
             net.listen( port, ip, function(){
-
-                timer = new Timer( updateInterval );
-                timer.run = update;
-
-                resolve( null );
+                resolve( nil );
             });
         });
     }
@@ -69,24 +64,21 @@ class Server {
         }
     }
 
+    /*
     public function update() {
         for( pool in pools ) pool.update();
     }
+    */
 
-    public function addPool( pool : Pool ) : Bool {
+    public function addPool<T:Pool>( pool : T ) : T {
         if( pools.exists( pool.id ) )
-            return false;
+            return null;
         pools.set( pool.id, pool );
-        return true;
+        return pool;
     }
 
-    function createPool( id : String ) : Pool {
-        if( pools.exists( id ) )
-            return null;
-        var pool = new Pool( id );
-        pools.set( pool.id, pool );
-        onPoolCreate( pool );
-        return pool;
+    function createPool<T:Pool>( id : String ) : T {
+        return addPool( cast new Pool( id ) );
     }
 
     function createId( length = 16 ) : String {
@@ -123,7 +115,7 @@ class Server {
 
             var str = buf.toString();
             var msg : Message = try Json.parse( str ) catch(e:Dynamic) {
-                trace(e);
+                console.error( e );
                 return;
             }
 
@@ -135,17 +127,30 @@ class Server {
 
         //Sys.println( haxe.format.JsonPrinter.print(msg));
         //Sys.println( 'Message '+peer.id+' > '+msg.peer+' : '+msg.type );
-        onPeerMessage( peer, msg );
+        //onPeerMessage( peer, msg );
 
         switch msg.type {
 
         case join:
             //var pool = pools.exists( msg.pool ) ? pools.get( msg.pool ) : createPool( msg.pool );
+            if( !pools.exists( msg.pool ) ) {
+                console.error( 'pool does not exist '+msg.pool );
+                return;
+            }
+            var pool = pools.get( msg.pool );
+            if( pool.add( peer ) ) {
+                onPoolJoin( pool, peer );
+            }
+
+            /*
             var pool : Pool;
             if( pools.exists( msg.pool ) ) {
                 pool = pools.get( msg.pool );
             } else {
-                pool = createPool( msg.pool );
+                if( (pool = createPool( msg.pool )) != null ) {
+                    onPoolCreate( pool );
+                    pool.start();
+                }
             }
             if( pool != null ) {
                 if( pool.add( peer ) ) {
@@ -154,6 +159,7 @@ class Server {
             } else {
                 //TODO send error
             }
+            */
 
         case leave:
             if( pools.exists( msg.pool ) ) {
@@ -167,25 +173,44 @@ class Server {
         case pong:
             //
 
+        case data:
+            if( pools.exists( msg.pool ) ) {
+                var pool = pools.get( msg.pool );
+                if( pool.has( peer ) ) {
+                    pool.receive( peer, msg );
+                }
+            }
+
         case error:
-            trace(msg);
+            //console.error(msg);
 
         case offer,candidate,answer:
             if( pools.exists( msg.pool ) ) {
                 var pool = pools.get( msg.pool );
                 var receiver = pool.get( msg.peer );
                 if( receiver != null ) {
-                    //msg.peer = id;
                     msg.peer = peer.id;
                     receiver.sendMessage( msg );
                 } else {
                 }
             } else {
-                trace( 'Pool does not exist '+msg.pool );
+                console.warn( 'Pool does not exist '+msg.pool );
             }
 
+        /*
+        #if om_rtc_monitor
+        case monitor:
+            peer.sendMessage( {
+                type: monitor,
+                data: [for(peer in peers){
+                    id: peer.id
+                }] } );
+        #end
+        */
+
         default:
-            trace( 'Unknown type message: '+haxe.format.JsonPrinter.print(msg) );
+            //console.warn( 'Unknown type message: '+haxe.format.JsonPrinter.print(msg) );
+
         }
     }
 }
