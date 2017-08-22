@@ -11,7 +11,7 @@ class Server {
 
     public dynamic function onNodeConnect( node : Node ) {}
     public dynamic function onNodeDisconnect( node : Node ) {}
-    public dynamic function onNodeMessage( node : Node, msg : Dynamic ) {}
+    public dynamic function onNodeMessage( node : Node, msg : Message ) {}
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
@@ -82,7 +82,7 @@ class Server {
         }
     }
 
-    function handleNodeMessage( node : Node, msg : Dynamic ) {
+    function handleNodeMessage( node : Node, msg : Message ) {
 
         switch msg.type {
 
@@ -90,11 +90,10 @@ class Server {
             //TODO
             if( msg.data != null ) {
                 trace(msg.data);
-                trace(msg.data.key);
-                trace(msg.data.monitor);
             }
 
         case 'join':
+            //var data = (msg.data:{ mesh:String });
             if( !meshes.exists( msg.data.mesh ) ) {
                 node.sendError( 'mesh does not exist' );
                 return;

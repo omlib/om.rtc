@@ -1,17 +1,18 @@
 package om.rtc.mesh;
 
 import js.html.rtc.DataChannelInit;
+import js.html.rtc.IceCandidate;
 import js.html.rtc.SessionDescription;
 import om.rtc.mesh.Node;
 import js.Browser.console;
 
 class Mesh {
 
-    public dynamic function signal( msg : Dynamic ) {}
+    public dynamic function signal( msg : Message ) {}
 
     public dynamic function onConnect( node : Node ) {}
     public dynamic function onDisconnect( node : Node ) {}
-    public dynamic function onMessage( node : Node, msg : Dynamic ) {}
+    public dynamic function onMessage( node : Node, msg : Message ) {}
 
     public var id(default,null) : String;
     public var joined(default,null) = false;
@@ -25,7 +26,7 @@ class Mesh {
     }
 
     // signal
-    public function receive( msg : Dynamic ) {
+    public function receive( msg : Message ) {
 
         switch msg.type {
 
@@ -65,12 +66,12 @@ class Mesh {
 
         case 'candidate':
             var node = nodes.get( msg.data.node );
-            node.addIceCandidate( msg.data.candidate ).then( function(_){
+            node.addIceCandidate( new IceCandidate( msg.data.candidate ) ).then( function(_){
             });
         }
     }
 
-    public function broadcast( msg : Dynamic )  {
+    public function broadcast( msg : Message )  {
         var str = try Json.stringify( msg ) catch(e:Dynamic) {
             console.error(e);
             return;
@@ -103,7 +104,7 @@ class Mesh {
         }
         node.onConnect = () -> {
             if( !joinRequestSent ) {
-                node.sendMessage( { type: 'join' } );
+                node.sendMessage( { type: 'join', data: null } );
                 joinRequestSent = true;
             }
             onConnect( node );

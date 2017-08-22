@@ -17,7 +17,7 @@ class Node {
     public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onConnect() {}
     public dynamic function onDisconnect() {}
-    public dynamic function onMessage( msg : Dynamic ) {}
+    public dynamic function onMessage( msg : Message ) {}
 
     public var id(default,null) : String;
     public var connected(default,null) = false;
@@ -53,7 +53,7 @@ class Node {
         }
     }
 
-    public function sendMessage( msg : Dynamic ) {
+    public function sendMessage( msg : Message ) {
         if( connected ) {
             var str = try Json.stringify( msg ) catch(e:Dynamic){
                 console.error(e);
@@ -111,7 +111,7 @@ class Node {
     }
 
     @:allow(om.rtc.mesh.Mesh)
-    function addIceCandidate( candidate : Dynamic ) : Promise<Void> {
+    function addIceCandidate( candidate : IceCandidate ) : Promise<Void> {
         return connection.addIceCandidate( new IceCandidate( candidate ) );
     }
 

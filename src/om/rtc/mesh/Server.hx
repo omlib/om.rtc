@@ -7,7 +7,7 @@ import om.Nil;
 
 class Server {
 
-    public dynamic function signal( msg : Dynamic ) {}
+    public dynamic function signal( msg : Message ) {}
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
@@ -38,7 +38,7 @@ class Server {
                 reject( 'server error '+e.code );
             });
             socket.addEventListener( 'message', function(e){
-                var msg = try Json.parse( e.data ) catch(e:Dynamic) {
+                var msg : Message = try Json.parse( e.data ) catch(e:Dynamic) {
                     console.warn(e);
                     return;
                 }
@@ -51,7 +51,7 @@ class Server {
         socket.close();
     }
 
-    public function send( msg : Dynamic ) {
+    public function send( msg : Message ) {
         var str = Json.stringify( msg );
         socket.send( str );
     }
@@ -66,7 +66,7 @@ class Server {
     }
     */
 
-    function handleMessage( msg : Dynamic ) {
+    function handleMessage( msg : Message ) {
         signal( msg );
     }
 }
