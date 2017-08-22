@@ -76,7 +76,7 @@ class Node {
 
         initiator = true;
 
-        setDataChannel( connection.createDataChannel( createDataChannelId(), channelConfig ) );
+        setDataChannel( connection.createDataChannel( 'mesh', channelConfig ) );
 
         return new Promise( function(resolve,reject){
             connection.onnegotiationneeded = function() {
@@ -151,7 +151,10 @@ class Node {
         }
     }
 
+    /*
     function createDataChannelId( length = 16 ) : String {
-        return Util.createRandomString( length );
+        //return Util.createRandomString( length );
+
     }
+    */
 }

@@ -134,8 +134,7 @@ class Server {
     }
 
     function createNodeId( length = 16 ) : String {
-        var id : String = null;
-        while( nodes.exists( id = Util.createRandomString( length ) ) ) {}
-        return id;
+        //while( nodes.exists( id = Util.createRandomString( length ) ) ) {}
+        return js.node.Crypto.randomBytes( length ).toString( 'hex' ).substr( 0, length );
     }
 }
