@@ -1,7 +1,6 @@
 package om.rtc.mesh;
 
 import haxe.Json;
-import haxe.ds.IntMap;
 import js.Browser.console;
 import js.Promise;
 import js.html.MediaStream;
@@ -13,7 +12,7 @@ import js.html.rtc.IceCandidate;
 import js.html.rtc.PeerConnection;
 import js.html.rtc.SessionDescription;
 
-class Peer {
+class Node {
 
     public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onConnect() {}
@@ -64,24 +63,6 @@ class Peer {
         }
     }
 
-    /*
-    public function sendString( str : String ) {
-        if( connected ) {
-            channel.send( str );
-        }
-    }
-
-    public function sendMessage( msg : Dynamic ) {
-        if( connected ) {
-            var str = try Json.stringify( msg ) catch(e:Dynamic){
-                console.error(e);
-                return;
-            }
-            channel.send( str );
-        }
-    }
-    */
-
     public function addStream( stream : MediaStream ) {
         connection.addStream( stream );
     }
@@ -90,7 +71,7 @@ class Peer {
         return connection.createDataChannel( id, config );
     }
 
-    @:allow(om.rtc.mesh.Pool)
+    @:allow(om.rtc.mesh.Mesh)
     function connectTo( ?channelConfig : DataChannelInit ) {
 
         initiator = true;
@@ -109,8 +90,8 @@ class Peer {
         });
     }
 
-    @:allow(om.rtc.mesh.Pool)
-    function connectFrom( sdp : Dynamic ) {
+    @:allow(om.rtc.mesh.Mesh)
+    function connectFrom( sdp : SessionDescription ) {
 
         initiator = false;
 
@@ -119,7 +100,7 @@ class Peer {
         }
 
         return new Promise( function(resolve,reject) {
-            connection.setRemoteDescription( new SessionDescription( sdp ) ).then( function(_){
+            connection.setRemoteDescription( sdp ).then( function(_){
                 connection.createAnswer().then( function(answer){
                     connection.setLocalDescription( answer ).then( function(e){
                         resolve( connection.localDescription );
@@ -129,18 +110,18 @@ class Peer {
         });
     }
 
-    @:allow(om.rtc.mesh.Pool)
+    @:allow(om.rtc.mesh.Mesh)
     function addIceCandidate( candidate : Dynamic ) : Promise<Void> {
         return connection.addIceCandidate( new IceCandidate( candidate ) );
     }
 
-    @:allow(om.rtc.mesh.Pool)
-    function setRemoteDescription( sdp : Dynamic ) {
+    @:allow(om.rtc.mesh.Mesh)
+    function setRemoteDescription( sdp : SessionDescription ) {
         //if( !initiator )
-        return connection.setRemoteDescription( new SessionDescription( sdp ) );
+        return connection.setRemoteDescription( sdp );
     }
 
-    @:allow(om.rtc.mesh.Pool)
+    @:allow(om.rtc.mesh.Mesh)
     function disconnect() {
         if( connected ) {
             connected = false;
@@ -156,7 +137,7 @@ class Peer {
             onConnect();
         }
         channel.onmessage = function(e) {
-            onMessage( e.data );
+            onMessage( Json.parse( e.data ) );
         };
         channel.onclose = function(e) {
             //connection.close();
@@ -170,7 +151,7 @@ class Peer {
         }
     }
 
-    function createDataChannelId() : String {
-        return Util.createRandomString( 8 );
+    function createDataChannelId( length = 16 ) : String {
+        return Util.createRandomString( length );
     }
 }
