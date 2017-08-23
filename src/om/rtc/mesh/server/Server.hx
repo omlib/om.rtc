@@ -97,12 +97,12 @@ class Server {
             }
 
         case 'join':
-            //var data = (msg.data:{ mesh:String });
-            if( !meshes.exists( msg.data.mesh ) ) {
+            var data : { mesh: String } = msg.data;
+            if( !meshes.exists( data.mesh ) ) {
                 node.sendError( 'mesh does not exist' );
                 return;
             }
-            var mesh = meshes.get( msg.data.mesh );
+            var mesh = meshes.get( data.mesh );
             //mesh.handleNodeMessage( node, msg );
             if( mesh.add( node ) ) {
                 node.sendMessage( {
@@ -115,20 +115,22 @@ class Server {
             }
 
         case 'leave':
-            if( !meshes.exists( msg.data.mesh ) ) {
+            var data : { mesh: String } = msg.data;
+            if( !meshes.exists( data.mesh ) ) {
                 node.sendError( 'mesh does not exist' );
                 return;
             }
-            var mesh = meshes.get( msg.data.mesh );
+            var mesh = meshes.get( data.mesh );
             mesh.remove( node.id );
 
         case 'offer','answer','candidate':
-            var receiver = nodes.get( msg.data.node );
+            var data : { node: String } = msg.data;
+            var receiver = nodes.get( data.node );
             if( receiver == null ) {
                 node.sendError( 'node does not exist' );
                 return;
             }
-            msg.data.node = node.id;
+            data.node = node.id;
             receiver.sendMessage( msg );
 
         default:
