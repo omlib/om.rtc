@@ -12,18 +12,21 @@ class Node {
     public dynamic function onMessage( msg : Dynamic ) {}
 
     public var id(default,null) : String;
-    //public var meshes(default,null) : Map<String,Mehs>;
+    public var meshes(default,null) : Array<String>;
 
     public var ip(get,null) : String;
     inline function get_ip() return socket.remoteAddress;
 
+    public var isWebSocket(default,null) : Null<Bool>;
+
     var socket : Socket;
-    var isWebSocket : Bool;
 
     public function new( id : String, socket : Socket ) {
 
         this.id = id;
         this.socket = socket;
+
+        meshes = [];
 
         socket.once( 'close', function(e) {
             onDisconnect();
@@ -33,7 +36,7 @@ class Node {
             if( buf == null ) return;
 
             if( isWebSocket == null ) {
-                if( buf.slice( 0, 10 ).toString() == 'GET / HTTP' ) {
+                if( buf.slice( 0, 10 ).toString() == 'GET / HTTP' ) { //TODO
                     isWebSocket = true;
                     socket.write( WebSocket.createHandshake( buf ) );
                     onConnect();
@@ -57,9 +60,9 @@ class Node {
     }
 
     public function sendBuffer( buf : Buffer ) {
-            if( isWebSocket ) buf = WebSocket.writeFrame( buf );
-            socket.write( buf );
-        }
+        if( isWebSocket ) buf = WebSocket.writeFrame( buf );
+        socket.write( buf );
+    }
 
     public inline function sendString( str : String ) {
         sendBuffer( new Buffer( str ) );
@@ -77,7 +80,7 @@ class Node {
         sendMessage( { type: 'error', data: message } );
     }
 
-    public function disconnect() {
+    public inline function disconnect() {
         socket.end();
     }
 }

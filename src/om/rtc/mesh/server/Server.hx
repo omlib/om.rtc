@@ -74,6 +74,10 @@ class Server {
         }
         node.onDisconnect = function() {
             nodes.remove( node.id );
+            for( id in node.meshes ) {
+                var mesh = meshes.get( id );
+                if( mesh != null ) mesh.remove( node.id );
+            }
             onNodeDisconnect( node );
         }
         node.onMessage = function(msg) {
@@ -100,7 +104,7 @@ class Server {
             }
             var mesh = meshes.get( msg.data.mesh );
             //mesh.handleNodeMessage( node, msg );
-            if( mesh.addNode( node ) ) {
+            if( mesh.add( node ) ) {
                 node.sendMessage( {
                     type: 'join',
                     data: {
@@ -116,7 +120,7 @@ class Server {
                 return;
             }
             var mesh = meshes.get( msg.data.mesh );
-            mesh.removeNode( node.id );
+            mesh.remove( node.id );
 
         case 'offer','answer','candidate':
             var receiver = nodes.get( msg.data.node );
@@ -133,7 +137,7 @@ class Server {
         }
     }
 
-    function createNodeId( length = 16 ) : String {
+    function createNodeId( length = 4 ) : String {
 
         //while( nodes.exists( id = Util.createRandomString( length ) ) ) {}
 
