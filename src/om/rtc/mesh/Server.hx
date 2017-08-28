@@ -18,13 +18,22 @@ class Server {
 
     var socket : WebSocket;
 
+    /*
     public function new( ip : String, port : Int ) {
         this.ip = ip;
         this.port = port;
         connected = false;
     }
+    */
+    public function new() {
+        connected = false;
+    }
 
-    public function connect() : Promise<Server> {
+    public function connect( ip : String, port : Int ) : Promise<Server> {
+
+        this.ip = ip;
+        this.port = port;
+        connected = false;
 
         return new Promise( function(resolve,reject){
 

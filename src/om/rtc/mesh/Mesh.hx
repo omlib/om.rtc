@@ -12,9 +12,9 @@ class Mesh {
 
     public dynamic function onJoin() {}
 
-    public dynamic function onConnect( node : Node ) {}
-    public dynamic function onDisconnect( node : Node ) {}
-    public dynamic function onMessage( node : Node, msg : Message ) {}
+    public dynamic function onNodeConnect( node : Node ) {}
+    public dynamic function onNodeDisconnect( node : Node ) {}
+    public dynamic function onNodeMessage( node : Node, msg : Message ) {}
 
     public var id(default,null) : String;
     public var joined(default,null) = false;
@@ -34,8 +34,6 @@ class Mesh {
 
     // signal
     public function receive( msg : Message ) {
-
-        trace(msg);
 
         switch msg.type {
 
@@ -94,20 +92,18 @@ class Mesh {
         nodes = new Map();
     }
 
-    public function getConnectedNodes() : Array<Node> {
-        var nodes = new Array<Node>();
-        for( node in this.nodes )
-            if( node.connected )
-                nodes.push( node );
-        return nodes;
-    }
-
     public function broadcast( msg : Message )  {
         var str = try Json.stringify( msg ) catch(e:Dynamic) {
             console.error(e);
             return;
         }
         for( node in nodes ) node.send( str );
+    }
+
+    public function getConnectedNodes() : Array<Node> {
+        var nodes = new Array<Node>();
+        for( n in this.nodes ) if( n.connected ) nodes.push( n );
+        return nodes;
     }
 
     function createNode( id : String ) : Node {
@@ -125,13 +121,13 @@ class Mesh {
                 joinRequestSent = true;
                 onJoin();
             }
-            onConnect( node );
+            onNodeConnect( node );
         }
-        node.onMessage = msg -> onMessage( node, msg );
+        node.onMessage = msg -> onNodeMessage( node, msg );
         node.onDisconnect = () -> {
             nodes.remove( node.id );
             numNodes--;
-            onDisconnect( node );
+            onNodeDisconnect( node );
         }
 
         return node;

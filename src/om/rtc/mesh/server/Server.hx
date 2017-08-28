@@ -139,7 +139,7 @@ class Server {
         }
     }
 
-    function createNodeId( length = 4 ) : String {
+    function createNodeId( length = 16 ) : String {
 
         //while( nodes.exists( id = Util.createRandomString( length ) ) ) {}
 

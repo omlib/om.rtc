@@ -17,6 +17,7 @@ class Node {
     public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onConnect() {}
     public dynamic function onDisconnect() {}
+    public dynamic function onChannel( channel : DataChannel ) {}
     public dynamic function onMessage( msg : Message ) {}
 
     public var id(default,null) : String;
@@ -67,7 +68,7 @@ class Node {
         connection.addStream( stream );
     }
 
-    public function createDataChannel( id : String, config : DataChannelInit ) : DataChannel {
+    public function createDataChannel( id : String, ?config : DataChannelInit ) : DataChannel {
         return connection.createDataChannel( id, config );
     }
 
@@ -96,7 +97,7 @@ class Node {
         initiator = false;
 
         connection.ondatachannel = function(e){
-            setDataChannel( e.channel );
+            if( channel == null ) setDataChannel( e.channel ) else onChannel( e.channel );
         }
 
         return new Promise( function(resolve,reject) {
@@ -137,7 +138,11 @@ class Node {
             onConnect();
         }
         channel.onmessage = function(e) {
-            onMessage( Json.parse( e.data ) );
+            var msg = try Json.parse( e.data ) catch(e:Dynamic) {
+                console.warn(e);
+                return;
+            }
+            onMessage( msg );
         };
         channel.onclose = function(e) {
             //connection.close();
