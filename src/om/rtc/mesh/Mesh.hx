@@ -8,8 +8,7 @@ import js.Browser.console;
 
 class Mesh {
 
-    public dynamic function signal( msg : Message ) {}
-
+    public dynamic function onSignal( msg : Message ) {}
     public dynamic function onJoin() {}
 
     public dynamic function onNodeConnect( node : Node ) {}
@@ -32,9 +31,9 @@ class Mesh {
     public inline function iterator() : Iterator<Node>
         return nodes.iterator();
 
-    // signal
-    public function receive( msg : Message ) {
+    public function handleSignal( msg : Message ) {
 
+        trace( msg );
         switch msg.type {
 
         case 'join':
@@ -48,7 +47,7 @@ class Mesh {
                 for( id in nodeIds ) {
                     var node = createNode( id );
                     node.connectTo( createDataChannelConfig() ).then( function(sdp){
-                        signal( { type: 'offer', data: { node: node.id, sdp: sdp } } );
+                        onSignal( { type: 'offer', data: { node: node.id, sdp: sdp } } );
                     }).catchError( function(e){
                         trace(e);
                     });
@@ -59,7 +58,7 @@ class Mesh {
             var data : { node: String, sdp: Dynamic } = msg.data;
             var node = createNode( data.node );
             node.connectFrom( new SessionDescription( data.sdp ) ).then( function(sdp){
-                signal( { type: 'answer', data: { node: node.id, sdp: sdp } } );
+                onSignal( { type: 'answer', data: { node: node.id, sdp: sdp } } );
             }).catchError( function(e){
                 trace('ERROR '+e);
             });
@@ -84,7 +83,7 @@ class Mesh {
     }
 
     public function join() {
-        signal( { type: 'join', data: { mesh: id } } );
+        onSignal( { type: 'join', data: { mesh: id } } );
     }
 
     public function leave() {
@@ -113,7 +112,7 @@ class Mesh {
         numNodes++;
 
         node.onCandidate = candidate -> {
-            signal( { type: 'candidate', data: { node: node.id, candidate: candidate } } );
+            onSignal( { type: 'candidate', data: { node: node.id, candidate: candidate } } );
         }
         node.onConnect = () -> {
             if( !joinRequestSent ) {

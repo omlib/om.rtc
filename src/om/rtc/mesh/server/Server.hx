@@ -11,7 +11,7 @@ class Server {
 
     public dynamic function onNodeConnect( node : Node ) {}
     public dynamic function onNodeDisconnect( node : Node ) {}
-    public dynamic function onNodeMessage( node : Node, msg : Message ) {}
+    public dynamic function onNodeSignal( node : Node, msg : Message ) {}
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
@@ -81,12 +81,12 @@ class Server {
             onNodeDisconnect( node );
         }
         node.onMessage = function(msg) {
-            onNodeMessage( node, msg );
-            handleNodeMessage( node, msg );
+            onNodeSignal( node, msg );
+            handleSignal( node, msg );
         }
     }
 
-    function handleNodeMessage( node : Node, msg : Message ) {
+    function handleSignal( node : Node, msg : Message ) {
 
         switch msg.type {
 

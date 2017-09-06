@@ -7,10 +7,10 @@ import om.Nil;
 
 class Server {
 
-    public dynamic function signal( msg : Message ) {}
-
     public dynamic function onConnect() {}
     public dynamic function onDisconnect( ?error : String ) {}
+
+    public dynamic function onSignal( msg : Message ) {}
 
     public var ip(default,null) : String;
     public var port(default,null) : Int;
@@ -18,13 +18,6 @@ class Server {
 
     var socket : WebSocket;
 
-    /*
-    public function new( ip : String, port : Int ) {
-        this.ip = ip;
-        this.port = port;
-        connected = false;
-    }
-    */
     public function new() {
         connected = false;
     }
@@ -55,27 +48,31 @@ class Server {
         });
     }
 
-    public function send( msg : Message ) {
-        var str = Json.stringify( msg );
-        socket.send( str );
-    }
-
-    /*
-    public function join( mesh : String ) {
-        send( { type: 'join', data: { mesh: mesh } } );
-    }
-
-    public function leave( mesh : String ) {
-        send( { type: 'leave', data: { mesh: mesh } } );
-    }
-    */
-
     public function disconnect() {
         if( socket != null ) {
             socket.removeEventListener( 'message', handleSocketMessage );
             socket.close();
             socket = null;
         }
+    }
+
+    public function sendSignal( msg : Message ) : String {
+        var str = try Json.stringify( msg ) catch(e:Dynamic) {
+            trace(e);
+            return null;
+        }
+        socket.send( str );
+        return str;
+    }
+
+    /*
+    public function join( mesh : String ) {
+        send( { type: 'join', data: { mesh: mesh } } );
+    }
+    */
+
+    public inline function leave( mesh : String ) {
+        sendSignal( { type: 'leave', data: { mesh: mesh } } );
     }
 
     /*
@@ -96,6 +93,6 @@ class Server {
     }
 
     function handleMessage( msg : Message ) {
-        signal( msg );
+        onSignal( msg );
     }
 }
