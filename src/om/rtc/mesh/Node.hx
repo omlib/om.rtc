@@ -14,9 +14,9 @@ import js.html.rtc.SessionDescription;
 
 class Node {
 
-    public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onConnect() {}
     public dynamic function onDisconnect() {}
+    public dynamic function onCandidate( e : IceCandidate ) {}
     public dynamic function onChannel( channel : DataChannel ) {}
     public dynamic function onMessage( msg : Message ) {}
 
@@ -49,9 +49,7 @@ class Node {
 	@:overload( function( data : js.html.Blob ) : Void {} )
 	@:overload( function( data : js.html.ArrayBuffer ) : Void {} )
     public function send( data : String ) {
-        if( connected ) {
-            channel.send( data );
-        }
+        if( connected ) channel.send( data );
     }
 
     public function sendMessage( msg : Message ) {
@@ -96,8 +94,8 @@ class Node {
 
         initiator = false;
 
-        connection.ondatachannel = function(e){
-            if( channel == null ) setDataChannel( e.channel ) else onChannel( e.channel );
+        connection.ondatachannel = e -> {
+            (channel == null) ? setDataChannel( e.channel ) : onChannel( e.channel );
         }
 
         return new Promise( function(resolve,reject) {
@@ -145,21 +143,13 @@ class Node {
             onMessage( msg );
         };
         channel.onclose = function(e) {
-            //connection.close();
             connected = false;
             onDisconnect();
         }
         channel.onerror = function(e) {
-            //connection.close();
             connected = false;
             onDisconnect();
         }
     }
 
-    /*
-    function createDataChannelId( length = 16 ) : String {
-        //return Util.createRandomString( length );
-
-    }
-    */
 }

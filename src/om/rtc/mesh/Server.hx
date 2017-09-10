@@ -8,8 +8,7 @@ import om.Nil;
 class Server {
 
     public dynamic function onConnect() {}
-    public dynamic function onDisconnect( ?error : String ) {}
-
+    public dynamic function onDisconnect( ?error : Error ) {}
     public dynamic function onSignal( msg : Message ) {}
 
     public var ip(default,null) : String;
@@ -36,13 +35,15 @@ class Server {
                 onConnect();
             });
             socket.addEventListener( 'close', function(e){
-                reject( null );
-                onDisconnect( null );
+                var message = om.net.WebSocket.ErrorCode.getMeaning( e.code );
+                var err = new Error( message );
+                reject( err );
+                onDisconnect( err );
 
             });
             socket.addEventListener( 'error', function(e){
-                reject( e );
-                onDisconnect( e );
+                //reject( e );
+                //onDisconnect( e );
             });
             socket.addEventListener( 'message', handleSocketMessage, false );
         });
@@ -86,13 +87,13 @@ class Server {
 
     function handleSocketMessage( e ) {
         var msg : Message = try Json.parse( e.data ) catch(e:Dynamic) {
-            console.warn( e );
+            console.error( e );
             return;
         }
-        handleMessage( msg );
+        handleSignal( msg );
     }
 
-    function handleMessage( msg : Message ) {
+    inline function handleSignal( msg : Message ) {
         onSignal( msg );
     }
 }

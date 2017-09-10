@@ -6,21 +6,21 @@ import js.html.rtc.SessionDescription;
 import om.rtc.mesh.Node;
 import js.Browser.console;
 
-class Mesh {
+class Mesh<T:Node> {
 
     public dynamic function onSignal( msg : Message ) {}
     public dynamic function onJoin() {}
 
-    public dynamic function onNodeConnect( node : Node ) {}
-    public dynamic function onNodeDisconnect( node : Node ) {}
-    public dynamic function onNodeMessage( node : Node, msg : Message ) {}
+    public dynamic function onNodeConnect( node : T ) {}
+    public dynamic function onNodeMessage( node : T, msg : Message ) {}
+    public dynamic function onNodeDisconnect( node : T ) {}
 
     public var id(default,null) : String;
     public var joined(default,null) = false;
     public var joinRequestSent(default,null) = false;
+    public var numNodes(default,null) : Int;
 
-    var nodes : Map<String,Node>;
-    var numNodes : Int;
+    var nodes : Map<String,T>;
 
     public function new( id : String ) {
         this.id = id;
@@ -28,24 +28,21 @@ class Mesh {
         numNodes = 0;
     }
 
-    public inline function iterator() : Iterator<Node>
+    public inline function iterator() : Iterator<T>
         return nodes.iterator();
 
     public function handleSignal( msg : Message ) {
 
-        trace( msg );
         switch msg.type {
 
         case 'join':
             var data : { nodes: Array<String> } = msg.data;
-            var nodeIds : Array<String> = data.nodes;
-            if( nodeIds.length == 0 ) {
-                //TODO
+            if( data.nodes.length == 0 ) {
                 joinRequestSent = true;
                 onJoin();
             } else {
-                for( id in nodeIds ) {
-                    var node = createNode( id );
+                for( id in data.nodes ) {
+                    var node = addNode( createNode( id ) );
                     node.connectTo( createDataChannelConfig() ).then( function(sdp){
                         onSignal( { type: 'offer', data: { node: node.id, sdp: sdp } } );
                     }).catchError( function(e){
@@ -56,7 +53,7 @@ class Mesh {
 
         case 'offer':
             var data : { node: String, sdp: Dynamic } = msg.data;
-            var node = createNode( data.node );
+            var node = addNode( createNode( data.node ) );
             node.connectFrom( new SessionDescription( data.sdp ) ).then( function(sdp){
                 onSignal( { type: 'answer', data: { node: node.id, sdp: sdp } } );
             }).catchError( function(e){
@@ -91,26 +88,31 @@ class Mesh {
         nodes = new Map();
     }
 
-    public function broadcast( msg : Message )  {
+    public function broadcastMessage( msg : Message )  {
         var str = try Json.stringify( msg ) catch(e:Dynamic) {
             console.error(e);
             return;
         }
-        for( node in nodes ) node.send( str );
+        broadcast( str );
     }
 
-    public function getConnectedNodes() : Array<Node> {
-        var nodes = new Array<Node>();
+    public inline function broadcast( str : String )  {
+        for( n in nodes ) n.send( str );
+    }
+
+    public function getConnectedNodes() : Array<T> {
+        var nodes = new Array<T>();
         for( n in this.nodes ) if( n.connected ) nodes.push( n );
         return nodes;
     }
 
-    function createNode( id : String ) : Node {
+    function createNode( id : String ) : T {
+        return cast new Node( id );
+    }
 
-        var node = new Node( id );
+    function addNode( node : T ) : T {
         nodes.set( node.id, node );
         numNodes++;
-
         node.onCandidate = candidate -> {
             onSignal( { type: 'candidate', data: { node: node.id, candidate: candidate } } );
         }
@@ -128,7 +130,6 @@ class Mesh {
             numNodes--;
             onNodeDisconnect( node );
         }
-
         return node;
     }
 
@@ -140,4 +141,5 @@ class Mesh {
             //maxPacketLifeTime: 1000
         };
     }
+
 }
