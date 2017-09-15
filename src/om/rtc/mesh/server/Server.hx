@@ -27,7 +27,7 @@ class Server {
         meshes = new Map();
     }
 
-    public function start() {
+    public function start() : Promise<Nil> {
         return new Promise( function(resolve,reject){
             net = Net.createServer( handleSocketConnect );
             net.on( 'error', function(e){
@@ -48,19 +48,19 @@ class Server {
         }
     }
 
+    public function addMesh( mesh : Mesh ) : Bool {
+        if( meshes.exists( mesh.id ) )
+            return false;
+        meshes.set( mesh.id, mesh );
+        return true;
+    }
+
     public function createMesh( id : String ) : Mesh {
         if( meshes.exists( id ) )
             return null;
         var mesh = new Mesh( id );
         meshes.set( id, mesh );
         return mesh;
-    }
-
-    public function addMesh( mesh : Mesh ) : Bool {
-        if( meshes.exists( mesh.id ) )
-            return false;
-        meshes.set( mesh.id, mesh );
-        return true;
     }
 
     function handleSocketConnect( socket : Socket ) {
@@ -111,7 +111,7 @@ class Server {
                         mesh: mesh.id,
                         nodes: [for(n in mesh.nodes) if(n != node) n.id]
                     }
-                } );
+                });
             }
 
         case 'leave':
@@ -140,12 +140,14 @@ class Server {
     }
 
     function createNodeId( length = 16 ) : String {
+        var id : String;
+        while( nodes.exists( id = createRandomString( length ) ) ) {}
+        return id;
+    }
 
-        //while( nodes.exists( id = Util.createRandomString( length ) ) ) {}
-
+    static function createRandomString( length : Int ) : String {
         #if nodejs
         return js.node.Crypto.randomBytes( length ).toString( 'hex' ).substr( 0, length );
-
         #else
         var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         var values = new js.html.Uint32Array( length );
@@ -153,7 +155,6 @@ class Server {
         var str = "";
         for( i in 0...length ) result += charset.charAt( values[i] % charset.length );
         return str;
-
         #end
     }
 }

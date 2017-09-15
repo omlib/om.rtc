@@ -1,22 +1,25 @@
 package om.rtc.mesh.server;
 
-import js.Node.console;
-
 class Mesh {
 
     public var id(default,null) : String;
-    public var nodes(default,null): Map<String,Node>;
+    public var nodes(default,null) = new Map<String,Node>();
+    public var numNodes(default,null) = 0;
+    //public var maxNodes(default,null) : Int;
 
-    public function new( id : String ) {
+    public function new( id : String, maxNodes = 100 ) {
         this.id = id;
-        nodes = new Map();
+        //this.maxNodes = maxNodes;
     }
-
-    //public function start() {}
-    //public function stop() {}
 
     public inline function iterator() : Iterator<Node>
         return nodes.iterator();
+
+    public function start() : Promise<Nil>
+        return Promise.resolve( null );
+
+    public function stop() : Promise<Nil>
+        return Promise.resolve( null );
 
     public inline function has( id : String ) : Bool
         return nodes.exists( id );
@@ -26,6 +29,7 @@ class Mesh {
             return false;
         nodes.set( node.id, node );
         node.meshes.push( id );
+        numNodes++;
         return true;
     }
 
@@ -35,6 +39,7 @@ class Mesh {
         var node = nodes.get( id );
         nodes.remove( id );
         node.meshes.remove( this.id );
+        numNodes--;
         return true;
     }
 

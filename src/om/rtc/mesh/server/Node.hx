@@ -59,13 +59,8 @@ class Node {
         });
     }
 
-    public function sendBuffer( buf : Buffer ) {
-        if( isWebSocket ) buf = WebSocket.writeFrame( buf );
-        socket.write( buf );
-    }
-
-    public inline function sendString( str : String ) {
-        sendBuffer( new Buffer( str ) );
+    public inline function sendError( message : String ) {
+        sendMessage( { type: 'error', data: message } );
     }
 
     public function sendMessage( msg : Dynamic ) {
@@ -76,11 +71,16 @@ class Node {
         sendString( str );
     }
 
-    public inline function sendError( message : String ) {
-        sendMessage( { type: 'error', data: message } );
+    public inline function sendString( str : String ) {
+        sendBuffer( new Buffer( str ) );
     }
 
-    public inline function disconnect() {
+    public function sendBuffer( buf : Buffer ) {
+        if( isWebSocket ) buf = WebSocket.writeFrame( buf );
+        socket.write( buf );
+    }
+
+    public function disconnect() {
         socket.end();
     }
 }
