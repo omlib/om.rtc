@@ -7,6 +7,7 @@ import js.node.net.Socket;
 import js.Node.console;
 import om.Nil;
 
+@:require(nodejs)
 class Server {
 
     public dynamic function onNodeConnect( node : Node ) {}

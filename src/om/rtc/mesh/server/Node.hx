@@ -5,6 +5,7 @@ import js.node.net.Socket;
 import js.Node.console;
 import om.net.WebSocket;
 
+@:require(nodejs)
 class Node {
 
     public dynamic function onConnect() {}

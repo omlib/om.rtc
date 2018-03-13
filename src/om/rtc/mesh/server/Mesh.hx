@@ -1,5 +1,8 @@
 package om.rtc.mesh.server;
 
+import js.Promise;
+
+@:require(nodejs)
 class Mesh {
 
     public var id(default,null) : String;
