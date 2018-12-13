@@ -136,7 +136,7 @@ class Mesh<T:Node> {
     function createDataChannelConfig() : DataChannelInit {
         return {
             ordered: true,
-            outOfOrderAllowed: false,
+        //    outOfOrderAllowed: false,
             //maxRetransmitTime: 400,
             //maxPacketLifeTime: 1000
         };
