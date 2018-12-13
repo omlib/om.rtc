@@ -1,7 +1,6 @@
 --no-output
 -lib om.rtc
 -dce no
--D doc
 -D doc-gen
 --macro exclude('om.rtc.signal')
 --each
@@ -13,6 +12,6 @@
 
 --next
 -js x
--xml doc/nodejs.xml
+-xml doc/node.xml
 -lib hxnodejs
---macro include('om.rtc.mesh')
+om.rtc.mesh.Server
